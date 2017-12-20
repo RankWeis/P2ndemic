@@ -37,26 +37,35 @@ class P2ndemic {
     }
 }
 
-fun main(args: Array<String>): Unit {
-    var game = P2ndemic()
+fun main(args: Array<String>) {
+    val game = P2ndemic()
     var epidemics = 0
     while (true) {
-        println("Enter your card or epidemic:")
-        var input: String = readLine()?.toUpperCase() ?: continue
-        when (input) {
-            "EPIDEMIC" -> {
-                epidemics++; game.epidemic()
-            }
-            else -> {
-                try {
+        try {
+            println("Enter your card or epidemic:")
+            val input: String = readLine()?.toUpperCase() ?: continue
+            when (input.split(" ")[0]) {
+                "EPIDEMIC" -> {
+                    epidemics++; game.epidemic()
+                }
+                "REMOVE" -> game.discard.remove(input.split(" ")[1])
+                "LIST" -> {
+                    println("Discard = " + game.discard.toString())
+                    println("Deck = " + game.topDeck.toString())
+                    println("Epidemics = " + epidemics)
+                    println("Cards Drawn = " + game.cardDrawNum(epidemics))
+
+                }
+                else -> {
                     game.draw(input)
-                } catch (e: UnsupportedOperationException) {
-                    println(e.message)
-                    println("try again")
                 }
             }
+        } catch (e: Exception) {
+            println(e.message)
+            println("try again")
         }
-        var cardsToDraw = game.cardDrawNum(epidemics)
+
+        val cardsToDraw = game.cardDrawNum(epidemics)
         var cardsDrawn = 0;
         var currentList = 0;
         while (cardsDrawn < cardsToDraw) {
