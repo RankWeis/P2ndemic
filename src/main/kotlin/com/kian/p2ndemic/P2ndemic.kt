@@ -1,31 +1,31 @@
 package com.kian.p2ndemic
 
-
 typealias Card = String
-typealias Cards = MutableList<Card>
-typealias Gamestate = Pair<MutableList<Cards>, Cards>
+typealias Cards = List<Card>
+
+data class Gamestate(val deck: List<Cards>, val discard: Cards, val epidemics: Int)
 
 class P2ndemic {
     fun draw(g: Gamestate, card: String) : Gamestate {
-        val (topDeck, discard) = g
-        val firstDeck = topDeck[0]
+        var (topDeck, discard) = g
+        var firstDeck = if(topDeck.isEmpty()) emptyList() else topDeck[0]
         if (!firstDeck.isEmpty()) {
             if (!firstDeck.contains(card)) {
                 throw UnsupportedOperationException("That should not be possible!")
             }
-            firstDeck.remove(card)
+            firstDeck -= card
             if (firstDeck.isEmpty()) {
-                topDeck.removeAt(0)
+                topDeck = topDeck.subList(1, topDeck.size)
             }
         }
-        discard.add(card)
-        return Pair(topDeck, discard)
+        discard += card
+        return Gamestate(topDeck, discard, g.epidemics)
     }
 
     fun epidemic(g: Gamestate) : Gamestate {
         val (topDeck, discard) = g
-        topDeck.add(0, discard)
-        return Pair(topDeck, mutableListOf())
+        val newTop = topDeck.reversed().plusElement(discard).reversed()
+        return Gamestate(newTop, listOf(), g.epidemics)
     }
 
 
@@ -41,51 +41,47 @@ class P2ndemic {
 
 fun main(args: Array<String>) {
     val game = P2ndemic()
-    var epidemics = 0
-    var discard: MutableList<String> = mutableListOf()
-    var topDeck: MutableList<MutableList<String>> = mutableListOf()
-    topDeck.add(mutableListOf())
+    var gamestate = Gamestate(emptyList(), emptyList(), 0)
+    gamestate = gamestate.copy(deck = gamestate.deck.plusElement(emptyList()))
     while (true) {
         try {
             println("Enter your card or epidemic:")
             val input: String = readLine()?.toUpperCase() ?: continue
-            when (input.split(" ")[0]) {
-                "EPIDEMIC" -> {
-                    epidemics++;
-                    val gamestate = game.epidemic(Gamestate(topDeck, discard))
-                    topDeck = gamestate.first
-                    discard = gamestate.second
-                }
-                "REMOVE" -> discard.remove(input.split(" ")[1])
-                "LIST" -> {
-                    println("Discard = " + discard.toString())
-                    println("Deck = " + topDeck.toString())
-                    println("Epidemics = " + epidemics)
-                    println("Cards Drawn = " + game.cardDrawNum(epidemics))
-
-                }
-                else -> {
-                    val gamestate = game.draw(Gamestate(topDeck, discard), input)
-                    topDeck = gamestate.first
-                    discard = gamestate.second
-                }
-            }
+            gamestate = pandemic(game, gamestate, input)
         } catch (e: Exception) {
             println(e.message)
+            e.printStackTrace()
             println("try again")
         }
 
-        val cardsToDraw = game.cardDrawNum(epidemics)
-        var cardsDrawn = 0;
-        var currentList = 0;
+        val cardsToDraw = game.cardDrawNum(gamestate.epidemics)
+        var cardsDrawn = 0
+        var currentList = 0
         while (cardsDrawn < cardsToDraw) {
-            if (currentList >= topDeck.size) {
+            if (currentList >= gamestate.deck.size) {
                 break
             }
-            println(oddsNextDraw(topDeck.get(currentList), (cardsToDraw - cardsDrawn)))
-            cardsDrawn += minOf(topDeck.get(currentList).size, cardsToDraw)
+            println(oddsNextDraw(gamestate.deck[currentList], (cardsToDraw - cardsDrawn)))
+            cardsDrawn += minOf(gamestate.deck[currentList].size, cardsToDraw)
             currentList++
         }
 
+    }
+}
+
+fun pandemic(game: P2ndemic, gamestate: Gamestate, input: String): Gamestate {
+    return when (input.split(" ")[0]) {
+        "EPIDEMIC" -> game.epidemic(gamestate.copy(epidemics = gamestate.epidemics + 1))
+        "REMOVE" -> gamestate.copy(discard = (gamestate.discard - input.split(" ")[1]))
+        "LIST" -> {
+            println("Discard = " + gamestate.discard.toString())
+            println("Deck = " + gamestate.deck.toString())
+            println("Epidemics = " + gamestate.epidemics)
+            println("Cards Drawn = " + game.cardDrawNum(gamestate.epidemics))
+            gamestate
+        }
+        else -> {
+            game.draw(gamestate, input)
+        }
     }
 }
