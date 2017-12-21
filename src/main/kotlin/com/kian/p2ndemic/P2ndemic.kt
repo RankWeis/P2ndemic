@@ -1,13 +1,13 @@
 package com.kian.p2ndemic
 
 
+typealias Card = String
+typealias Cards = MutableList<Card>
+typealias Gamestate = Pair<MutableList<Cards>, Cards>
+
 class P2ndemic {
-    var discard: MutableList<String> = mutableListOf()
-    var topDeck: MutableList<MutableList<String>> = mutableListOf()
-    fun draw(card: String) {
-        if (topDeck.isEmpty()) {
-            topDeck.add(mutableListOf())
-        }
+    fun draw(g: Gamestate, card: String) : Gamestate {
+        val (topDeck, discard) = g
         val firstDeck = topDeck[0]
         if (!firstDeck.isEmpty()) {
             if (!firstDeck.contains(card)) {
@@ -19,11 +19,13 @@ class P2ndemic {
             }
         }
         discard.add(card)
+        return Pair(topDeck, discard)
     }
 
-    fun epidemic() {
+    fun epidemic(g: Gamestate) : Gamestate {
+        val (topDeck, discard) = g
         topDeck.add(0, discard)
-        discard = mutableListOf()
+        return Pair(topDeck, mutableListOf())
     }
 
 
@@ -40,24 +42,32 @@ class P2ndemic {
 fun main(args: Array<String>) {
     val game = P2ndemic()
     var epidemics = 0
+    var discard: MutableList<String> = mutableListOf()
+    var topDeck: MutableList<MutableList<String>> = mutableListOf()
+    topDeck.add(mutableListOf())
     while (true) {
         try {
             println("Enter your card or epidemic:")
             val input: String = readLine()?.toUpperCase() ?: continue
             when (input.split(" ")[0]) {
                 "EPIDEMIC" -> {
-                    epidemics++; game.epidemic()
+                    epidemics++;
+                    val gamestate = game.epidemic(Gamestate(topDeck, discard))
+                    topDeck = gamestate.first
+                    discard = gamestate.second
                 }
-                "REMOVE" -> game.discard.remove(input.split(" ")[1])
+                "REMOVE" -> discard.remove(input.split(" ")[1])
                 "LIST" -> {
-                    println("Discard = " + game.discard.toString())
-                    println("Deck = " + game.topDeck.toString())
+                    println("Discard = " + discard.toString())
+                    println("Deck = " + topDeck.toString())
                     println("Epidemics = " + epidemics)
                     println("Cards Drawn = " + game.cardDrawNum(epidemics))
 
                 }
                 else -> {
-                    game.draw(input)
+                    val gamestate = game.draw(Gamestate(topDeck, discard), input)
+                    topDeck = gamestate.first
+                    discard = gamestate.second
                 }
             }
         } catch (e: Exception) {
@@ -69,11 +79,11 @@ fun main(args: Array<String>) {
         var cardsDrawn = 0;
         var currentList = 0;
         while (cardsDrawn < cardsToDraw) {
-            if (currentList >= game.topDeck.size) {
+            if (currentList >= topDeck.size) {
                 break
             }
-            println(oddsNextDraw(game.topDeck.get(currentList), cardsToDraw))
-            cardsDrawn += minOf(game.topDeck.get(currentList).size, cardsToDraw)
+            println(oddsNextDraw(topDeck.get(currentList), (cardsToDraw - cardsDrawn)))
+            cardsDrawn += minOf(topDeck.get(currentList).size, cardsToDraw)
             currentList++
         }
 

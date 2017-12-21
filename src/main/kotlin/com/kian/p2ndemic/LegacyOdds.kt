@@ -15,12 +15,13 @@ fun oddsNextDraw(knownCards: List<String>, cardsDrawn: Int) : String {
 
 fun findAllCardOdds(knownCards: List<String>, cardsDrawn: Int) : Map<String, Double> {
     val occurences : Map<String, Int> = knownCards.groupingBy { it }.eachCount()
-    return occurences.entries.fold(emptyMap<String, Double>(), {
+    return occurences.entries.fold(emptyMap(), {
         map, entry -> map.plus( Pair(entry.key, findOddsForCard(entry.value, knownCards.size, cardsDrawn)))
     })
 
 }
 
 fun findOddsForCard(count: Int, totalCards: Int, cardsDrawn: Int) : Double {
-    return 1 - ((0..minOf(cardsDrawn - 1, totalCards - 1)).fold(1.0 , { acc, x -> acc * ((totalCards - x - count) / (totalCards - x).toDouble())}))
+    return 1 - ((0..minOf(cardsDrawn - 1, totalCards - 1))
+            .fold(1.0 , { acc, x -> acc * ((totalCards - x - count) / (totalCards - x).toDouble())}))
 }
