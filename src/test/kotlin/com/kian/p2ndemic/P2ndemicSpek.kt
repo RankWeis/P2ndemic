@@ -33,6 +33,19 @@ object P2ndemicSpek : Spek({
             assertThat(odds.get("b")).isEqualTo(odds.get("c")).isEqualTo(odds.get("d"))
         }
 
+        it("Puts the first deck first") {
+            var game = P2ndemic()
+                    .draw("a")
+                    .draw("b")
+                    .draw("c")
+                    .epidemic()
+                    .draw("a")
+                    .draw("b")
+                    .epidemic()
+                    .draw("a")
+            assertThat(findAllCardOdds(game.deck[0], 2)["b"]).isEqualTo(1.0)
+        }
+
         it("Throws an exception if an invalid card is picked") {
             var game = P2ndemic()
                     .draw("a")

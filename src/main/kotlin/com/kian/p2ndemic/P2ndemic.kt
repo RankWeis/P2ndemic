@@ -13,29 +13,28 @@ data class P2ndemic(val deck: List<Cards> = emptyList(),
                     val epidemics: Int = 0,
                     val totalCardsNum: Int = 0) {
     fun draw(card: String) : P2ndemic {
-        var newDeck = deck
+        var newDeck : List<Cards> = deck
         var firstDeck = if(deck.isEmpty()) emptyList() else deck[0]
         if (!firstDeck.isEmpty()) {
             if (!firstDeck.contains(card)) {
                 throw UnsupportedOperationException("That should not be possible!")
             }
             firstDeck -= card
-            newDeck = deck.subList(1, deck.size)
+            newDeck =  deck.subList(1, deck.size)
             if (!firstDeck.isEmpty()) {
-                newDeck = newDeck.reversed().plusElement(firstDeck).reversed()
+                newDeck = listOf(firstDeck).plus(newDeck)
             }
         }
-        return P2ndemic(newDeck, discard + card, epidemics)
+        return this.copy(deck = newDeck, discard = discard + card)
     }
 
     fun epidemic() : P2ndemic {
-        val newTop = deck.reversed().plusElement(discard).reversed()
-        return P2ndemic(newTop, listOf(), epidemics + 1)
+        return P2ndemic(listOf(discard).plus(deck), emptyList(), epidemics + 1)
     }
 
 
     fun printOdds() {
-        val cardsToDraw = cardDrawNum(epidemics)
+        val cardsToDraw = cardDrawNum()
         var cardsDrawn = 0
         var currentList = 0
         while (cardsDrawn < cardsToDraw) {
@@ -57,12 +56,12 @@ data class P2ndemic(val deck: List<Cards> = emptyList(),
                 println(mapper.writeValueAsString(this))
                 this
             }
-            "IMPORT" -> mapper.readValue(inp[1].toLowerCase())
+            "IMPORT" -> mapper.readValue(inp[1])
             "LIST" -> {
                 println("Discard = " + discard.toString())
                 println("Deck = " + deck.toString())
                 println("Epidemics = " + epidemics)
-                println("Cards Drawn = " + cardDrawNum(epidemics))
+                println("Cards Drawn = " + cardDrawNum())
                 this
             }
             else -> {
@@ -72,7 +71,7 @@ data class P2ndemic(val deck: List<Cards> = emptyList(),
     }
 
 
-    fun cardDrawNum(epidemics: Int): Int {
+    private fun cardDrawNum(): Int {
         return when {
             epidemics <= 2 -> 2
             epidemics <= 4 -> 3
