@@ -1,11 +1,11 @@
 package com.kian.p2ndemic
 
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.spek.api.Spek
-import org.junit.runner.RunWith
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.it
 import org.junit.platform.runner.JUnitPlatform
-import org.assertj.core.api.Assertions.assertThat
+import org.junit.runner.RunWith
 
 @RunWith(JUnitPlatform::class)
 object LegacyOddsSpek: Spek({
@@ -39,7 +39,7 @@ object LegacyOddsSpek: Spek({
     describe ("odds on the next draw") {
         it("Can display odds") {
             val cards = listOf("San Francisco", "Chicago", "Sao Paulo")
-            assertThat(oddsNextDraw(cards, 0))
+            assertThat(oddsNextDraw(cards, 2))
                     .contains("San Francisco=0.66")
                     .contains("Chicago=0.66")
                     .contains("Sao Paulo=0.66")

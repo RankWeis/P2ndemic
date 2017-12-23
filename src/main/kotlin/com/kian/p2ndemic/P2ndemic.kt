@@ -1,31 +1,74 @@
 package com.kian.p2ndemic
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+
 typealias Card = String
 typealias Cards = List<Card>
 
-data class Gamestate(val deck: List<Cards>, val discard: Cards, val epidemics: Int)
+val mapper = jacksonObjectMapper()
 
-class P2ndemic {
-    fun draw(g: Gamestate, card: String) : Gamestate {
-        var (topDeck, discard) = g
-        var firstDeck = if(topDeck.isEmpty()) emptyList() else topDeck[0]
+data class P2ndemic(val deck: List<Cards> = emptyList(),
+                    val discard: Cards = emptyList(),
+                    val epidemics: Int = 0,
+                    val totalCardsNum: Int = 0) {
+    fun draw(card: String) : P2ndemic {
+        var newDeck = deck
+        var firstDeck = if(deck.isEmpty()) emptyList() else deck[0]
         if (!firstDeck.isEmpty()) {
             if (!firstDeck.contains(card)) {
                 throw UnsupportedOperationException("That should not be possible!")
             }
             firstDeck -= card
-            if (firstDeck.isEmpty()) {
-                topDeck = topDeck.subList(1, topDeck.size)
+            newDeck = deck.subList(1, deck.size)
+            if (!firstDeck.isEmpty()) {
+                newDeck = newDeck.reversed().plusElement(firstDeck).reversed()
             }
         }
-        discard += card
-        return Gamestate(topDeck, discard, g.epidemics)
+        return P2ndemic(newDeck, discard + card, epidemics)
     }
 
-    fun epidemic(g: Gamestate) : Gamestate {
-        val (topDeck, discard) = g
-        val newTop = topDeck.reversed().plusElement(discard).reversed()
-        return Gamestate(newTop, listOf(), g.epidemics)
+    fun epidemic() : P2ndemic {
+        val newTop = deck.reversed().plusElement(discard).reversed()
+        return P2ndemic(newTop, listOf(), epidemics + 1)
+    }
+
+
+    fun printOdds() {
+        val cardsToDraw = cardDrawNum(epidemics)
+        var cardsDrawn = 0
+        var currentList = 0
+        while (cardsDrawn < cardsToDraw) {
+            if (currentList >= deck.size) {
+                break
+            }
+            println(oddsNextDraw(deck[currentList], (cardsToDraw - cardsDrawn)))
+            cardsDrawn += minOf(deck[currentList].size, cardsToDraw)
+            currentList++
+        }
+    }
+
+    fun pandemic(input: String): P2ndemic {
+        val inp = input.split(" ")
+        return when (inp[0].toUpperCase()) {
+            "EPIDEMIC" -> epidemic()
+            "REMOVE" -> copy(discard = (discard - inp[1]))
+            "EXPORT" -> {
+                println(mapper.writeValueAsString(this))
+                this
+            }
+            "IMPORT" -> mapper.readValue(inp[1].toLowerCase())
+            "LIST" -> {
+                println("Discard = " + discard.toString())
+                println("Deck = " + deck.toString())
+                println("Epidemics = " + epidemics)
+                println("Cards Drawn = " + cardDrawNum(epidemics))
+                this
+            }
+            else -> {
+                draw(input)
+            }
+        }
     }
 
 
@@ -39,49 +82,22 @@ class P2ndemic {
     }
 }
 
-fun main(args: Array<String>) {
-    val game = P2ndemic()
-    var gamestate = Gamestate(emptyList(), emptyList(), 0)
-    gamestate = gamestate.copy(deck = gamestate.deck.plusElement(emptyList()))
+fun runGame() {
+    var game = P2ndemic()
     while (true) {
         try {
             println("Enter your card or epidemic:")
-            val input: String = readLine()?.toUpperCase() ?: continue
-            gamestate = pandemic(game, gamestate, input)
+            val input: String = readLine() ?: continue
+            game = game.pandemic(input)
+            game.printOdds()
         } catch (e: Exception) {
-            println(e.message)
             e.printStackTrace()
-            println("try again")
-        }
-
-        val cardsToDraw = game.cardDrawNum(gamestate.epidemics)
-        var cardsDrawn = 0
-        var currentList = 0
-        while (cardsDrawn < cardsToDraw) {
-            if (currentList >= gamestate.deck.size) {
-                break
-            }
-            println(oddsNextDraw(gamestate.deck[currentList], (cardsToDraw - cardsDrawn)))
-            cardsDrawn += minOf(gamestate.deck[currentList].size, cardsToDraw)
-            currentList++
-        }
-
-    }
-}
-
-fun pandemic(game: P2ndemic, gamestate: Gamestate, input: String): Gamestate {
-    return when (input.split(" ")[0]) {
-        "EPIDEMIC" -> game.epidemic(gamestate.copy(epidemics = gamestate.epidemics + 1))
-        "REMOVE" -> gamestate.copy(discard = (gamestate.discard - input.split(" ")[1]))
-        "LIST" -> {
-            println("Discard = " + gamestate.discard.toString())
-            println("Deck = " + gamestate.deck.toString())
-            println("Epidemics = " + gamestate.epidemics)
-            println("Cards Drawn = " + game.cardDrawNum(gamestate.epidemics))
-            gamestate
-        }
-        else -> {
-            game.draw(gamestate, input)
+            println("Try Again")
         }
     }
 }
+
+fun main(args: Array<String>) {
+    runGame()
+}
+
