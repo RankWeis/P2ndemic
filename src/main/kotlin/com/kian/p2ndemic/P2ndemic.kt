@@ -28,8 +28,11 @@ data class P2ndemic(val deck: List<Cards> = emptyList(),
         return this.copy(deck = newDeck, discard = discard + card)
     }
 
-    fun epidemic() : P2ndemic {
-        return P2ndemic(listOf(discard).plus(deck), emptyList(), epidemics + 1)
+    fun epidemic(card: String) : P2ndemic {
+        if (card.isBlank()) {
+            throw UnsupportedOperationException("add epidemic'd card")
+        }
+        return P2ndemic(listOf(discard.plus(card)).plus(deck), emptyList(), epidemics + 1)
     }
 
 
@@ -50,14 +53,14 @@ data class P2ndemic(val deck: List<Cards> = emptyList(),
     fun pandemic(input: String): P2ndemic {
         val inp = input.split(" ")
         return when (inp[0].toUpperCase()) {
-            "EPIDEMIC" -> epidemic()
+            "EPIDEMIC" -> epidemic(inp[1])
             "REMOVE" -> copy(discard = (discard - inp[1]))
             "EXPORT" -> {
                 println(mapper.writeValueAsString(this))
                 this
             }
             "IMPORT" -> mapper.readValue(inp[1])
-            "LIST" -> {
+            "LIST", "LS" -> {
                 println("Discard = " + discard.toString())
                 println("Deck = " + deck.toString())
                 println("Epidemics = " + epidemics)

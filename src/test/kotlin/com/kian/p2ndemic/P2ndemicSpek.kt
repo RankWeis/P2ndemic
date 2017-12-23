@@ -16,18 +16,18 @@ object P2ndemicSpek : Spek({
                     .draw("a")
                     .draw("b")
                     .draw("c")
-                    .epidemic()
+                    .epidemic("d")
                     .draw("a")
-            assertThat(game.deck).containsOnly(listOf("b", "c"))
+            assertThat(game.deck).containsOnly(listOf("b", "c", "d"))
             assertThat(game.discard).containsOnly("a")
-            findAllCardOdds(game.deck[0], 2).values
+            findAllCardOdds(game.deck[0], 3).values
                     .forEach({ assertThat(it).isEqualTo(1.0) })
             game = game
                     .draw("b")
                     .draw("c")
-                    .draw("a")
                     .draw("d")
-                    .epidemic()
+                    .draw("a")
+                    .epidemic("e")
             val odds = findAllCardOdds(game.deck[0], 2)
             assertThat(odds.get("a")).isGreaterThan(odds.get("b")).isGreaterThan(odds.get("c"))
             assertThat(odds.get("b")).isEqualTo(odds.get("c")).isEqualTo(odds.get("d"))
@@ -38,12 +38,12 @@ object P2ndemicSpek : Spek({
                     .draw("a")
                     .draw("b")
                     .draw("c")
-                    .epidemic()
+                    .epidemic("d")
                     .draw("a")
                     .draw("b")
-                    .epidemic()
+                    .epidemic("e")
                     .draw("a")
-            assertThat(findAllCardOdds(game.deck[0], 2)["b"]).isEqualTo(1.0)
+            assertThat(findAllCardOdds(game.deck[0], 3)["b"]).isEqualTo(1.0)
         }
 
         it("Throws an exception if an invalid card is picked") {
@@ -52,9 +52,9 @@ object P2ndemicSpek : Spek({
                     .draw("b")
                     .draw("c")
             assertFailsWith<UnsupportedOperationException> {
-                game.epidemic().draw("d")
+                game.epidemic("e").draw("d")
             }
-            assertThat(game.draw("d").epidemic().draw("d")).isNotNull()
+            assertThat(game.draw("d").epidemic("e").draw("d")).isNotNull()
         }
     }
 })
